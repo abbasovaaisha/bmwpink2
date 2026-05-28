@@ -1,4 +1,4 @@
-<?php
+\<?php
 require_once 'db.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -38,9 +38,14 @@ try {
             'email' => trim($input['email'] ?? ''),
             'birth_date' => trim($input['birth_date'] ?? ''),
             'gender' => $input['gender'] ?? '',
-            'bio' => trim($input['bio'] ?? ''),
             'contract_agreed' => (bool)($input['contract_agreed'] ?? false),
-            'languages' => $input['languages'] ?? []
+            'car_model' => $input['car_model'] ?? '',
+            'car_color' => $input['car_color'] ?? '',
+            'car_options' => $input['car_options'] ?? [],
+            'engine_type' => $input['engine_type'] ?? '',
+            'transmission' => $input['transmission'] ?? '',
+            'drive_type' => $input['drive_type'] ?? '',
+            'desired_hp' => isset($input['desired_hp']) && is_numeric($input['desired_hp']) ? (int)$input['desired_hp'] : null
         ];
         $errors = validateFormData($formData);
         if (!empty($errors)) { http_response_code(422); echo json_encode(['errors' => $errors]); exit; }
@@ -70,9 +75,14 @@ try {
             'email' => trim($input['email'] ?? ''),
             'birth_date' => trim($input['birth_date'] ?? ''),
             'gender' => $input['gender'] ?? '',
-            'bio' => trim($input['bio'] ?? ''),
             'contract_agreed' => (bool)($input['contract_agreed'] ?? false),
-            'languages' => $input['languages'] ?? []
+            'car_model' => $input['car_model'] ?? '',
+            'car_color' => $input['car_color'] ?? '',
+            'car_options' => $input['car_options'] ?? [],
+            'engine_type' => $input['engine_type'] ?? '',
+            'transmission' => $input['transmission'] ?? '',
+            'drive_type' => $input['drive_type'] ?? '',
+            'desired_hp' => isset($input['desired_hp']) && is_numeric($input['desired_hp']) ? (int)$input['desired_hp'] : null
         ];
         $errors = validateFormData($formData);
         if (!empty($errors)) { http_response_code(422); echo json_encode(['errors' => $errors]); exit; }

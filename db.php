@@ -18,30 +18,59 @@ function connectToDatabase() {
     return $db;
 }
 
-function getLanguageList() {
-    $pdo = connectToDatabase();
-    $stmt = $pdo->query("SELECT id, name FROM programming_languages ORDER BY name");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Модели BMW
+function getCarModels() {
+    return [
+        '1 Series' => 'BMW 1 Series',
+        '3 Series' => 'BMW 3 Series',
+        '5 Series' => 'BMW 5 Series',
+        'X3' => 'BMW X3',
+        'X5' => 'BMW X5',
+        'X6' => 'BMW X6',
+        'i8' => 'BMW i8',
+        'M4' => 'BMW M4 Competition',
+        'M8' => 'BMW M8 Competition'
+    ];
 }
 
-$allowedLanguages = [
-    'Pascal', 'C', 'C++', 'JavaScript', 'PHP', 'Python',
-    'Java', 'Haskell', 'Clojure', 'Prolog', 'Scala', 'Go'
-];
+// Цвета
+function getCarColors() {
+    return ['Черный', 'Белый', 'Синий', 'Розовый'];
+}
+
+// Опции
+function getCarOptions() {
+    return [
+        'panorama' => 'Панорамная крыша',
+        'premium_sound' => 'Премиум-аудиосистема',
+        'assist_package' => 'Пакет ассистентов',
+        'sport_package' => 'Спортивный пакет'
+    ];
+}
+
+// Тип двигателя
+function getEngineTypes() {
+    return ['Бензиновый', 'Дизельный', 'Гибрид', 'Электрический'];
+}
+
+// Коробка передач
+function getTransmissions() {
+    return ['Механика', 'Автомат', 'Робот'];
+}
+
+// Привод
+function getDriveTypes() {
+    return ['Передний', 'Задний', 'Полный'];
+}
+
 $allowedGenders = ['male', 'female'];
-$fieldExamples = [
-    'full_name' => 'Пример: Иванов Иван Иванович',
-    'phone'     => 'Пример: +7 999 123-45-67',
-    'email'     => 'Пример: ivanov@mail.ru',
-    'birth_date'=> 'ГГГГ-ММ-ДД',
-    'bio'       => 'До 10000 символов'
-];
 
 function validateFormData($formData) {
-    global $allowedLanguages, $allowedGenders, $fieldExamples;
+    global $allowedGenders;
     $errors = [];
 
-    if ($formData['full_name'] === '') {
+    // ФИО
+    if (empty($formData['full_name'])) {
         $errors['full_name'] = 'Поле обязательно.';
     } elseif (!preg_match('/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/u', $formData['full_name'])) {
         $errors['full_name'] = 'Только буквы, пробелы, дефис.';
@@ -52,7 +81,8 @@ function validateFormData($formData) {
         if (count($letters[0]) < 2) $errors['full_name'] = 'Минимум 2 буквы.';
     }
 
-    if ($formData['phone'] === '') {
+    // Телефон
+    if (empty($formData['phone'])) {
         $errors['phone'] = 'Поле обязательно.';
     } elseif (!preg_match('/^\+7[\s\(]*[0-9]{3}[\)\s]*[0-9]{3}[\s\-]*[0-9]{2}[\s\-]*[0-9]{2}$/', $formData['phone'])) {
         $errors['phone'] = 'Неверный формат. Пример: +7 999 123-45-67';
@@ -62,13 +92,15 @@ function validateFormData($formData) {
         elseif ($digits[0] !== '7') $errors['phone'] = 'Номер должен начинаться с 7.';
     }
 
-    if ($formData['email'] === '') {
+    // Email
+    if (empty($formData['email'])) {
         $errors['email'] = 'Поле обязательно.';
     } elseif (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $formData['email'])) {
         $errors['email'] = 'Некорректный email.';
     }
 
-    if ($formData['birth_date'] === '') {
+    // Дата рождения
+    if (empty($formData['birth_date'])) {
         $errors['birth_date'] = 'Поле обязательно.';
     } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $formData['birth_date'])) {
         $errors['birth_date'] = 'Формат ГГГГ-ММ-ДД';
@@ -78,31 +110,57 @@ function validateFormData($formData) {
         elseif ($dateObj > new DateTime('today')) $errors['birth_date'] = 'Дата не может быть в будущем.';
     }
 
-    if ($formData['gender'] === '') $errors['gender'] = 'Выберите пол.';
+    // Пол
+    if (empty($formData['gender'])) $errors['gender'] = 'Выберите пол.';
     elseif (!in_array($formData['gender'], $allowedGenders)) $errors['gender'] = 'Недопустимое значение.';
 
-    if (empty($formData['languages'])) $errors['languages'] = 'Выберите хотя бы один язык.';
-    else {
-        foreach ($formData['languages'] as $lang) {
-            if (!in_array($lang, $allowedLanguages)) { $errors['languages'] = 'Недопустимый язык.'; break; }
+    // Контракт
+    if (!$formData['contract_agreed']) $errors['contract_agreed'] = 'Подтвердите ознакомление с контрактом.';
+
+    // Автомобильные поля
+    $carModels = getCarModels();
+    if (empty($formData['car_model'])) $errors['car_model'] = 'Выберите модель.';
+    elseif (!isset($carModels[$formData['car_model']])) $errors['car_model'] = 'Недопустимая модель.';
+
+    $carColors = getCarColors();
+    if (empty($formData['car_color'])) $errors['car_color'] = 'Выберите цвет.';
+    elseif (!in_array($formData['car_color'], $carColors)) $errors['car_color'] = 'Недопустимый цвет.';
+
+    if (!empty($formData['car_options'])) {
+        $allowedOptions = array_keys(getCarOptions());
+        foreach ($formData['car_options'] as $opt) {
+            if (!in_array($opt, $allowedOptions)) { $errors['car_options'] = 'Недопустимая опция.'; break; }
         }
     }
 
-    if (strlen($formData['bio']) > 10000) $errors['bio'] = 'Максимум 10000 символов.';
-    if (!$formData['contract_agreed']) $errors['contract_agreed'] = 'Подтвердите ознакомление с контрактом.';
+    $engineTypes = getEngineTypes();
+    if (empty($formData['engine_type'])) $errors['engine_type'] = 'Выберите тип двигателя.';
+    elseif (!in_array($formData['engine_type'], $engineTypes)) $errors['engine_type'] = 'Недопустимый тип.';
+
+    $transmissions = getTransmissions();
+    if (empty($formData['transmission'])) $errors['transmission'] = 'Выберите коробку передач.';
+    elseif (!in_array($formData['transmission'], $transmissions)) $errors['transmission'] = 'Недопустимая КПП.';
+
+    $driveTypes = getDriveTypes();
+    if (empty($formData['drive_type'])) $errors['drive_type'] = 'Выберите тип привода.';
+    elseif (!in_array($formData['drive_type'], $driveTypes)) $errors['drive_type'] = 'Недопустимый привод.';
+
+    if (!empty($formData['desired_hp']) && (!is_numeric($formData['desired_hp']) || $formData['desired_hp'] < 50 || $formData['desired_hp'] > 2000)) {
+        $errors['desired_hp'] = 'Мощность должна быть числом от 50 до 2000 л.с.';
+    }
 
     return $errors;
 }
 
 function getApplicationById($id) {
     $pdo = connectToDatabase();
-    $stmt = $pdo->prepare("SELECT id, full_name, phone, email, birth_date, gender, bio, contract_agreed FROM applications WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, full_name, phone, email, birth_date, gender, contract_agreed,
+                                  car_model, car_color, car_options, engine_type, transmission, drive_type, desired_hp
+                           FROM applications WHERE id = ?");
     $stmt->execute([$id]);
     $app = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$app) return null;
-    $langStmt = $pdo->prepare("SELECT pl.name FROM application_languages al JOIN programming_languages pl ON al.language_id = pl.id WHERE al.application_id = ?");
-    $langStmt->execute([$id]);
-    $app['languages'] = $langStmt->fetchAll(PDO::FETCH_COLUMN);
+    $app['car_options'] = json_decode($app['car_options'] ?? '[]', true) ?: [];
     return $app;
 }
 
@@ -110,49 +168,41 @@ function saveApplication($id, $formData) {
     $pdo = connectToDatabase();
     $stmt = $pdo->prepare("
         UPDATE applications 
-        SET full_name = :fn, phone = :ph, email = :em, birth_date = :bd,
-            gender = :gen, bio = :bio, contract_agreed = :ca
+        SET full_name = :fn, phone = :ph, email = :em, birth_date = :bd, gender = :gen,
+            contract_agreed = :ca, car_model = :cm, car_color = :cc, car_options = :co,
+            engine_type = :et, transmission = :tr, drive_type = :dt, desired_hp = :hp
         WHERE id = :id
     ");
     $stmt->execute([
         ':fn' => $formData['full_name'], ':ph' => $formData['phone'],
         ':em' => $formData['email'], ':bd' => $formData['birth_date'],
-        ':gen' => $formData['gender'], ':bio' => $formData['bio'],
-        ':ca' => $formData['contract_agreed'] ? 1 : 0,
+        ':gen' => $formData['gender'], ':ca' => $formData['contract_agreed'] ? 1 : 0,
+        ':cm' => $formData['car_model'], ':cc' => $formData['car_color'],
+        ':co' => json_encode($formData['car_options'] ?? []),
+        ':et' => $formData['engine_type'], ':tr' => $formData['transmission'],
+        ':dt' => $formData['drive_type'], ':hp' => $formData['desired_hp'] ?: null,
         ':id' => $id
     ]);
-    $pdo->prepare("DELETE FROM application_languages WHERE application_id = ?")->execute([$id]);
-    $langRecords = getLanguageList();
-    $languageMap = [];
-    foreach ($langRecords as $lang) $languageMap[$lang['name']] = $lang['id'];
-    $linkStmt = $pdo->prepare("INSERT INTO application_languages (application_id, language_id) VALUES (?, ?)");
-    foreach ($formData['languages'] as $langName) {
-        if (isset($languageMap[$langName])) $linkStmt->execute([$id, $languageMap[$langName]]);
-    }
 }
 
 function createApplication($formData) {
     $pdo = connectToDatabase();
     $pdo->beginTransaction();
     $stmt = $pdo->prepare("
-        INSERT INTO applications (full_name, phone, email, birth_date, gender, bio, contract_agreed)
-        VALUES (:fn, :ph, :em, :bd, :gen, :bio, :ca)
+        INSERT INTO applications (full_name, phone, email, birth_date, gender, contract_agreed,
+                                  car_model, car_color, car_options, engine_type, transmission, drive_type, desired_hp)
+        VALUES (:fn, :ph, :em, :bd, :gen, :ca, :cm, :cc, :co, :et, :tr, :dt, :hp)
     ");
     $stmt->execute([
         ':fn' => $formData['full_name'], ':ph' => $formData['phone'],
         ':em' => $formData['email'], ':bd' => $formData['birth_date'],
-        ':gen' => $formData['gender'], ':bio' => $formData['bio'],
-        ':ca' => $formData['contract_agreed'] ? 1 : 0
+        ':gen' => $formData['gender'], ':ca' => $formData['contract_agreed'] ? 1 : 0,
+        ':cm' => $formData['car_model'], ':cc' => $formData['car_color'],
+        ':co' => json_encode($formData['car_options'] ?? []),
+        ':et' => $formData['engine_type'], ':tr' => $formData['transmission'],
+        ':dt' => $formData['drive_type'], ':hp' => $formData['desired_hp'] ?: null
     ]);
     $id = $pdo->lastInsertId();
-
-    $langRecords = getLanguageList();
-    $languageMap = [];
-    foreach ($langRecords as $lang) $languageMap[$lang['name']] = $lang['id'];
-    $linkStmt = $pdo->prepare("INSERT INTO application_languages (application_id, language_id) VALUES (?, ?)");
-    foreach ($formData['languages'] as $langName) {
-        if (isset($languageMap[$langName])) $linkStmt->execute([$id, $languageMap[$langName]]);
-    }
 
     $login = 'user_' . $id . '_' . bin2hex(random_bytes(4));
     $plainPassword = bin2hex(random_bytes(6));

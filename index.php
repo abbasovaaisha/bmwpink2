@@ -13,12 +13,8 @@ function getJsonCookie($name) {
     }
     return null;
 }
-function deleteCookie($name) {
-    setcookie($name, '', time() - 3600, '/');
-}
-function setSessionFlash($key, $data) {
-    $_SESSION['flash'][$key] = $data;
-}
+function deleteCookie($name) { setcookie($name, '', time() - 3600, '/'); }
+function setSessionFlash($key, $data) { $_SESSION['flash'][$key] = $data; }
 function getSessionFlash($key) {
     $value = $_SESSION['flash'][$key] ?? null;
     unset($_SESSION['flash'][$key]);
@@ -32,14 +28,13 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// ---------- Обработка входа пользователя (для редактирования) ----------
+// ---------- Обработка входа пользователя ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'login') {
     $login = trim($_POST['login'] ?? '');
     $password = $_POST['password'] ?? '';
     $error = null;
-    if ($login === '' || $password === '') {
-        $error = 'Заполните оба поля.';
-    } else {
+    if ($login === '' || $password === '') $error = 'Заполните оба поля.';
+    else {
         $pdo = connectToDatabase();
         $stmt = $pdo->prepare("SELECT id, login, password_hash FROM applications WHERE login = ?");
         $stmt->execute([$login]);
@@ -50,44 +45,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $_SESSION['login'] = $user['login'];
             header('Location: ' . $_SERVER['SCRIPT_NAME']);
             exit;
-        } else {
-            $error = 'Неверный логин или пароль.';
-        }
+        } else $error = 'Неверный логин или пароль.';
     }
     setSessionFlash('login_error', $error);
     header('Location: ' . $_SERVER['SCRIPT_NAME']);
     exit;
 }
 
-// ---------- Обработка отправки формы (фоллбек при отключённом JS) ----------
+// ---------- Обработка отправки формы (фоллбек) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST['action'] !== 'login')) {
     $formData = [
-        'full_name'       => trim($_POST['full_name'] ?? ''),
-        'phone'           => trim($_POST['phone'] ?? ''),
-        'email'           => trim($_POST['email'] ?? ''),
-        'birth_date'      => trim($_POST['birth_date'] ?? ''),
-        'gender'          => $_POST['gender'] ?? '',
-        'bio'             => trim($_POST['bio'] ?? ''),
+        'full_name' => trim($_POST['full_name'] ?? ''),
+        'phone' => trim($_POST['phone'] ?? ''),
+        'email' => trim($_POST['email'] ?? ''),
+        'birth_date' => trim($_POST['birth_date'] ?? ''),
+        'gender' => $_POST['gender'] ?? '',
         'contract_agreed' => isset($_POST['contract_agreed']),
-        'languages'       => $_POST['languages'] ?? []
+        'car_model' => $_POST['car_model'] ?? '',
+        'car_color' => $_POST['car_color'] ?? '',
+        'car_options' => $_POST['car_options'] ?? [],
+        'engine_type' => $_POST['engine_type'] ?? '',
+        'transmission' => $_POST['transmission'] ?? '',
+        'drive_type' => $_POST['drive_type'] ?? '',
+        'desired_hp' => isset($_POST['desired_hp']) && is_numeric($_POST['desired_hp']) ? (int)$_POST['desired_hp'] : null
     ];
     $errors = validateFormData($formData);
     $isAuthenticated = isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true;
 
     if (!empty($errors)) {
-        if ($isAuthenticated) {
-            setSessionFlash('auth_errors', $errors);
-            setSessionFlash('auth_input', $formData);
-        } else {
-            setJsonCookie('form_errors', $errors, 0);
-            setJsonCookie('sticky_form_data', $formData, 0);
-        }
+        if ($isAuthenticated) { setSessionFlash('auth_errors', $errors); setSessionFlash('auth_input', $formData); }
+        else { setJsonCookie('form_errors', $errors, 0); setJsonCookie('sticky_form_data', $formData, 0); }
         header('Location: ' . $_SERVER['SCRIPT_NAME']);
         exit;
     }
 
     try {
-        $pdo = connectToDatabase();
         if ($isAuthenticated) {
             saveApplication($_SESSION['app_id'], $formData);
             setSessionFlash('success_message', 'Данные успешно обновлены!');
@@ -102,22 +94,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
         exit;
     } catch (Exception $e) {
         $errorMsg = 'Ошибка сохранения: ' . $e->getMessage();
-        if ($isAuthenticated) {
-            setSessionFlash('auth_errors', ['database' => $errorMsg]);
-            setSessionFlash('auth_input', $formData);
-        } else {
-            setJsonCookie('form_errors', ['database' => $errorMsg], 0);
-            setJsonCookie('sticky_form_data', $formData, 0);
-        }
+        if ($isAuthenticated) { setSessionFlash('auth_errors', ['database' => $errorMsg]); setSessionFlash('auth_input', $formData); }
+        else { setJsonCookie('form_errors', ['database' => $errorMsg], 0); setJsonCookie('sticky_form_data', $formData, 0); }
         header('Location: ' . $_SERVER['SCRIPT_NAME']);
         exit;
     }
 }
 
-// ---------- GET-запрос: подготовка данных для формы ----------
+// ---------- GET-запрос: загрузка данных для формы ----------
 $formInput = [
     'full_name' => '', 'phone' => '', 'email' => '', 'birth_date' => '',
-    'gender' => '', 'bio' => '', 'contract_agreed' => false, 'languages' => []
+    'gender' => '', 'contract_agreed' => false,
+    'car_model' => '', 'car_color' => '', 'car_options' => [],
+    'engine_type' => '', 'transmission' => '', 'drive_type' => '', 'desired_hp' => null
 ];
 $errorList = [];
 $successMessage = '';
@@ -130,11 +119,13 @@ if ($isAuthenticated) {
     $authInput = getSessionFlash('auth_input');
     if ($authErrors !== null && $authInput !== null) {
         $errorList = $authErrors;
-        $formInput = $authInput;
+        $formInput = array_merge($formInput, $authInput);
     } else {
         $appId = $_SESSION['app_id'];
         $pdo = connectToDatabase();
-        $stmt = $pdo->prepare("SELECT full_name, phone, email, birth_date, gender, bio, contract_agreed FROM applications WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT full_name, phone, email, birth_date, gender, contract_agreed,
+                                      car_model, car_color, car_options, engine_type, transmission, drive_type, desired_hp
+                               FROM applications WHERE id = ?");
         $stmt->execute([$appId]);
         $dbData = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($dbData) {
@@ -143,12 +134,14 @@ if ($isAuthenticated) {
             $formInput['email'] = $dbData['email'];
             $formInput['birth_date'] = $dbData['birth_date'];
             $formInput['gender'] = $dbData['gender'];
-            $formInput['bio'] = $dbData['bio'];
             $formInput['contract_agreed'] = (bool)$dbData['contract_agreed'];
-
-            $langStmt = $pdo->prepare("SELECT pl.name FROM application_languages al JOIN programming_languages pl ON al.language_id = pl.id WHERE al.application_id = ?");
-            $langStmt->execute([$appId]);
-            $formInput['languages'] = $langStmt->fetchAll(PDO::FETCH_COLUMN);
+            $formInput['car_model'] = $dbData['car_model'];
+            $formInput['car_color'] = $dbData['car_color'];
+            $formInput['car_options'] = json_decode($dbData['car_options'] ?? '[]', true) ?: [];
+            $formInput['engine_type'] = $dbData['engine_type'];
+            $formInput['transmission'] = $dbData['transmission'];
+            $formInput['drive_type'] = $dbData['drive_type'];
+            $formInput['desired_hp'] = $dbData['desired_hp'];
         }
     }
     $successMessage = getSessionFlash('success_message') ?? '';
@@ -157,29 +150,29 @@ if ($isAuthenticated) {
     $stickyData = getJsonCookie('sticky_form_data');
     if ($stickyErrors !== null && $stickyData !== null) {
         $errorList = $stickyErrors;
-        $formInput = $stickyData;
+        $formInput = array_merge($formInput, $stickyData);
         deleteCookie('form_errors');
         deleteCookie('sticky_form_data');
     } else {
         $defaultData = getJsonCookie('default_form_data');
-        if ($defaultData !== null) {
-            $formInput = array_merge($formInput, $defaultData);
-        }
+        if ($defaultData !== null) $formInput = array_merge($formInput, $defaultData);
     }
     $successMessage = getJsonCookie('success_flash')['message'] ?? '';
     if ($successMessage) deleteCookie('success_flash');
     $creds = getJsonCookie('new_credentials');
     if ($creds && isset($creds['login'], $creds['password'])) {
-        $credentialsMessage = "Ваш логин: {$creds['login']}<br>Пароль: {$creds['password']}<br><strong>Сохраните их для редактирования!</strong>";
+        $credentialsMessage = "Логин: {$creds['login']}<br>Пароль: {$creds['password']}<br><strong>Сохраните их для редактирования!</strong>";
         deleteCookie('new_credentials');
     }
 }
 
-$languageOptions = getLanguageList();
-if (empty($languageOptions)) {
-    global $allowedLanguages;
-    $languageOptions = array_map(function($n) { return ['id' => $n, 'name' => $n]; }, $allowedLanguages);
-}
+// Получаем списки для выпадающих меню
+$carModels = getCarModels();
+$carColors = getCarColors();
+$carOptionsList = getCarOptions();
+$engineTypes = getEngineTypes();
+$transmissions = getTransmissions();
+$driveTypes = getDriveTypes();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -198,7 +191,7 @@ if (empty($languageOptions)) {
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; }
         .form-group select[multiple] { min-height: 120px; }
-        .radio-group { display: flex; gap: 1rem; }
+        .radio-group, .options-group { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem; }
         .field-error { color: #e74c3c; font-size: 0.85rem; margin-top: 5px; }
         .has-error input, .has-error select, .has-error textarea { border-color: #e74c3c; background-color: #fff5f5; }
         .alert { padding: 1rem; border-radius: 5px; margin-bottom: 1rem; }
@@ -209,6 +202,8 @@ if (empty($languageOptions)) {
         .auth-form input { padding: 0.5rem; margin-right: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
         .auth-form button { background: #2c3e50; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
         .logout-btn { background: #e74c3c; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; }
+        .btn { background: #e91e63; color: white; border: none; padding: 0.8rem 2rem; border-radius: 30px; cursor: pointer; transition: all 0.3s; }
+        .btn:hover { background: #ad1457; transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -221,24 +216,17 @@ if (empty($languageOptions)) {
             </video>
             <div class="overlay"></div>
         </div>
-        
         <nav>
             <a href="#" class="logo">BMW <span>Pink</span></a>
             <ul class="nav-links">
                 <li><a href="#">Главная</a></li>
-                <li>
-                    <a href="#models">Модели</a>
-                    <ul class="dropdown">
-                        <li><a href="#m1">Серия 1</a></li>
-                        <li><a href="#m3">Серия 3</a></li>
-                        <li><a href="#m5">Серия 5</a></li>
-                    </ul>
-                </li>
+                <li><a href="#models">Модели</a></li>
                 <li><a href="#calculator">Калькулятор</a></li>
                 <li><a href="#tuning">Тюнинг</a></li>
                 <li><a href="#slider">Галерея</a></li>
                 <li><a href="#contact">Контакты</a></li>
                 <li><a href="#anketa" class="btn">Анкета</a></li>
+                <li><a href="admin.php" class="btn" style="background:#e67e22;">Админ</a></li>
             </ul>
             <div class="burger">
                 <div></div>
@@ -246,7 +234,6 @@ if (empty($languageOptions)) {
                 <div></div>
             </div>
         </nav>
-        
         <div class="hero">
             <h1>BMW в розовом стиле</h1>
             <p>Откройте для себя новый взгляд на легендарные автомобили BMW в эксклюзивной розовой тематике</p>
@@ -260,65 +247,23 @@ if (empty($languageOptions)) {
             <h2>Наши модели</h2>
             <p>Выберите идеальный BMW для себя из нашего эксклюзивного каталога</p>
         </div>
-        
         <div class="models-grid">
             <div class="model-card" id="m1">
-                <div class="model-img">
-                    <img src="bmw1black.jpeg" alt="BMW 1 Series" id="model-1-img">
-                </div>
-                <div class="model-info">
-                    <h3>BMW 1 Series</h3>
-                    <p>Компактный премиальный автомобиль с динамичным дизайном и передовыми технологиями.</p>
-                    <div class="model-price">от 2 500 000 ₽</div>
-                    <div class="color-picker">
-                        <h4>Выберите цвет:</h4>
-                        <div class="color-options">
-                            <div class="color-option active" style="background-color: #2A2A2A;" data-model="1" data-color-name="Черный"></div>
-                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-model="1" data-color-name="Белый"></div>
-                            <div class="color-option" style="background-color: #003DA5;" data-model="1" data-color-name="Синий"></div>
-                            <div class="color-option" style="background-color: #E91E63;" data-model="1" data-color-name="Розовый"></div>
-                        </div>
-                    </div>
+                <div class="model-img"><img src="bmw1black.jpeg" alt="BMW 1 Series" id="model-1-img"></div>
+                <div class="model-info"><h3>BMW 1 Series</h3><p>Компактный премиальный автомобиль.</p><div class="model-price">от 2 500 000 ₽</div>
+                    <div class="color-picker"><h4>Выберите цвет:</h4><div class="color-options"><div class="color-option active" style="background-color:#2A2A2A;" data-model="1" data-color-name="Черный"></div><div class="color-option" style="background-color:#FFFFFF;border:1px solid #eee;" data-model="1" data-color-name="Белый"></div><div class="color-option" style="background-color:#003DA5;" data-model="1" data-color-name="Синий"></div><div class="color-option" style="background-color:#E91E63;" data-model="1" data-color-name="Розовый"></div></div></div>
                 </div>
             </div>
-            
             <div class="model-card" id="m3">
-                <div class="model-img">
-                    <img src="bmw3black.jpeg" alt="BMW 3 Series" id="model-2-img">
-                </div>
-                <div class="model-info">
-                    <h3>BMW 3 Series</h3>
-                    <p>Легендарный спортивный седан, сочетающий в себе элегантность и производительность.</p>
-                    <div class="model-price">от 3 800 000 ₽</div>
-                    <div class="color-picker">
-                        <h4>Выберите цвет:</h4>
-                        <div class="color-options">
-                            <div class="color-option active" style="background-color: #2A2A2A;" data-model="2" data-color-name="Черный"></div>
-                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-model="2" data-color-name="Белый"></div>
-                            <div class="color-option" style="background-color: #003DA5;" data-model="2" data-color-name="Синий"></div>
-                            <div class="color-option" style="background-color: #E91E63;" data-model="2" data-color-name="Розовый"></div>
-                        </div>
-                    </div>
+                <div class="model-img"><img src="bmw3black.jpeg" alt="BMW 3 Series" id="model-2-img"></div>
+                <div class="model-info"><h3>BMW 3 Series</h3><p>Спортивный седан.</p><div class="model-price">от 3 800 000 ₽</div>
+                    <div class="color-picker"><h4>Выберите цвет:</h4><div class="color-options"><div class="color-option active" style="background-color:#2A2A2A;" data-model="2" data-color-name="Черный"></div><div class="color-option" style="background-color:#FFFFFF;border:1px solid #eee;" data-model="2" data-color-name="Белый"></div><div class="color-option" style="background-color:#003DA5;" data-model="2" data-color-name="Синий"></div><div class="color-option" style="background-color:#E91E63;" data-model="2" data-color-name="Розовый"></div></div></div>
                 </div>
             </div>
-            
             <div class="model-card" id="m5">
-                <div class="model-img">
-                    <img src="bmw5black.jpeg" alt="BMW 5 Series" id="model-3-img">
-                </div>
-                <div class="model-info">
-                    <h3>BMW 5 Series</h3>
-                    <p>Бизнес-класс с инновационными технологиями и непревзойденным комфортом.</p>
-                    <div class="model-price">от 4 900 000 ₽</div>
-                    <div class="color-picker">
-                        <h4>Выберите цвет:</h4>
-                        <div class="color-options">
-                            <div class="color-option active" style="background-color: #2A2A2A;" data-model="3" data-color-name="Черный"></div>
-                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-model="3" data-color-name="Белый"></div>
-                            <div class="color-option" style="background-color: #003DA5;" data-model="3" data-color-name="Синий"></div>
-                            <div class="color-option" style="background-color: #E91E63;" data-model="3" data-color-name="Розовый"></div>
-                        </div>
-                    </div>
+                <div class="model-img"><img src="bmw5black.jpeg" alt="BMW 5 Series" id="model-3-img"></div>
+                <div class="model-info"><h3>BMW 5 Series</h3><p>Бизнес-класс.</p><div class="model-price">от 4 900 000 ₽</div>
+                    <div class="color-picker"><h4>Выберите цвет:</h4><div class="color-options"><div class="color-option active" style="background-color:#2A2A2A;" data-model="3" data-color-name="Черный"></div><div class="color-option" style="background-color:#FFFFFF;border:1px solid #eee;" data-model="3" data-color-name="Белый"></div><div class="color-option" style="background-color:#003DA5;" data-model="3" data-color-name="Синий"></div><div class="color-option" style="background-color:#E91E63;" data-model="3" data-color-name="Розовый"></div></div></div>
                 </div>
             </div>
         </div>
@@ -326,28 +271,23 @@ if (empty($languageOptions)) {
 
     <!-- Fast Models Section -->
     <section class="fast-models">
-        <div class="section-title">
-            <h2>Самые быстрые BMW в мире</h2>
-            <p>Рейтинг самых скоростных моделей BMW по показателям разгона и максимальной скорости</p>
-        </div>
+        <div class="section-title"><h2>Самые быстрые BMW в мире</h2><p>Рейтинг самых скоростных моделей</p></div>
         <table class="fast-table">
-            <thead>
-                <tr><th>Модель</th><th>Разгон 0-100 км/ч</th><th>Макс. скорость</th><th>Двигатель</th><th>Мощность</th></tr>
-            </thead>
+            <thead><tr><th>Модель</th><th>Разгон 0-100 км/ч</th><th>Макс. скорость</th><th>Двигатель</th><th>Мощность</th></tr></thead>
             <tbody>
-                <tr><td>BMW M8 Competition Coupe</td><td>3.2 с</td><td>305 км/ч</td><td>4.4-литровый V8 twin-turbo</td><td>625–640 л.с.</td></tr>
-                <tr><td>BMW M5 CS</td><td>3.0 с</td><td>305 км/ч</td><td>4.4-литровый V8 twin-turbo</td><td>635 л.с.</td></tr>
-                <tr><td>BMW M5 Competition</td><td>3.3 с</td><td>305 км/ч</td><td>4.4-литровый V8 twin-turbo</td><td>625 л.с.</td></tr>
-                <tr><td>BMW M4 CSL</td><td>3.6 с</td><td>307 км/ч</td><td>3.0-литровый рядный 6 twin-turbo</td><td>550 л.с.</td></tr>
-                <tr><td>BMW M3 Competition xDrive</td><td>3.5 с</td><td>290 км/ч</td><td>3.0-литровый рядный 6 twin-turbo</td><td>510 л.с.</td></tr>
-                <tr><td>BMW X3 M Competition</td><td>3.8 с</td><td>285 км/ч</td><td>3.0-литровый рядный 6 twin-turbo</td><td>510 л.с.</td></tr>
+                <tr><td>BMW M8 Competition Coupe</td><td>3.2 с</td><td>305 км/ч</td><td>4.4л V8 twin-turbo</td><td>625–640 л.с.</td></tr>
+                <tr><td>BMW M5 CS</td><td>3.0 с</td><td>305 км/ч</td><td>4.4л V8 twin-turbo</td><td>635 л.с.</td></tr>
+                <tr><td>BMW M5 Competition</td><td>3.3 с</td><td>305 км/ч</td><td>4.4л V8 twin-turbo</td><td>625 л.с.</td></tr>
+                <tr><td>BMW M4 CSL</td><td>3.6 с</td><td>307 км/ч</td><td>3.0л рядный 6 twin-turbo</td><td>550 л.с.</td></tr>
+                <tr><td>BMW M3 Competition xDrive</td><td>3.5 с</td><td>290 км/ч</td><td>3.0л рядный 6 twin-turbo</td><td>510 л.с.</td></tr>
+                <tr><td>BMW X3 M Competition</td><td>3.8 с</td><td>285 км/ч</td><td>3.0л рядный 6 twin-turbo</td><td>510 л.с.</td></tr>
             </tbody>
         </table>
     </section>
 
     <!-- Tuning Section -->
     <section id="tuning">
-        <div class="section-title"><h2>Дополнительные услуги тюнинга</h2><p>Индивидуальные решения для персонализации вашего BMW</p></div>
+        <div class="section-title"><h2>Дополнительные услуги тюнинга</h2><p>Индивидуальные решения</p></div>
         <div class="tuning-grid">
             <div class="tuning-card"><div class="tuning-img"><img src="obves.jpg"></div><div class="tuning-info"><h3>Аэродинамический обвес</h3><p>Улучшение аэродинамики</p><div class="tuning-price">от 150 000 ₽</div></div></div>
             <div class="tuning-card"><div class="tuning-img"><img src="sport.jpg"></div><div class="tuning-info"><h3>Спортивная выхлопная система</h3><p>Улучшение мощности и звука</p><div class="tuning-price">от 80 000 ₽</div></div></div>
@@ -357,7 +297,7 @@ if (empty($languageOptions)) {
 
     <!-- Slider Section -->
     <section id="slider" class="slider-section">
-        <div class="section-title"><h2>Галерея BMW</h2><p>Лучшие модели BMW в эксклюзивных цветах</p></div>
+        <div class="section-title"><h2>Галерея BMW</h2><p>Лучшие модели</p></div>
         <div class="slider-container">
             <div class="slider">
                 <div class="slide"><img src="m4.jpg"><div class="slide-content"><h3>BMW M4 Competition</h3><p>510 л.с., M xDrive</p></div></div>
@@ -374,11 +314,11 @@ if (empty($languageOptions)) {
         <div class="section-title"><h2>Калькулятор стоимости</h2><p>Рассчитайте стоимость вашего будущего BMW</p></div>
         <div class="calculator">
             <form class="calculator-form" id="price-calculator">
-                <div class="form-group"><label for="model">Модель автомобиля</label><select id="model"><option value="2500000">BMW 1 Series - 2 500 000 ₽</option><option value="3800000">BMW 3 Series - 3 800 000 ₽</option><option value="4900000">BMW 5 Series - 4 900 000 ₽</option><option value="4200000">BMW X3 - 4 200 000 ₽</option><option value="6500000">BMW X5 - 6 500 000 ₽</option><option value="12000000">BMW i8 - 12 000 000 ₽</option></select></div>
-                <div class="form-group"><label for="color">Цвет кузова</label><select id="color"><option value="0">Черный (стандартный)</option><option value="50000">Белый (+50 000 ₽)</option><option value="100000">Синий (+100 000 ₽)</option><option value="150000">Розовый (+150 000 ₽)</option></select></div>
-                <div class="form-group"><label for="interior">Отделка салона</label><select id="interior"><option value="0">Стандартная кожа</option><option value="150000">Кожа Nappa (+150 000 ₽)</option><option value="250000">Индивидуальная кожа (+250 000 ₽)</option></select></div>
+                <div class="form-group"><label for="model">Модель</label><select id="model"><option value="2500000">BMW 1 Series - 2 500 000 ₽</option><option value="3800000">BMW 3 Series - 3 800 000 ₽</option><option value="4900000">BMW 5 Series - 4 900 000 ₽</option><option value="4200000">BMW X3 - 4 200 000 ₽</option><option value="6500000">BMW X5 - 6 500 000 ₽</option><option value="12000000">BMW i8 - 12 000 000 ₽</option></select></div>
+                <div class="form-group"><label for="color">Цвет</label><select id="color"><option value="0">Черный (стандартный)</option><option value="50000">Белый (+50 000 ₽)</option><option value="100000">Синий (+100 000 ₽)</option><option value="150000">Розовый (+150 000 ₽)</option></select></div>
+                <div class="form-group"><label for="interior">Салон</label><select id="interior"><option value="0">Стандартная кожа</option><option value="150000">Кожа Nappa (+150 000 ₽)</option><option value="250000">Индивидуальная (+250 000 ₽)</option></select></div>
                 <div class="form-group"><label for="wheels">Диски</label><select id="wheels"><option value="0">Стандартные 17"</option><option value="80000">Легкосплавные 18" (+80 000 ₽)</option><option value="150000">Легкосплавные 19" (+150 000 ₽)</option></select></div>
-                <div class="form-group full-width"><label>Дополнительные опции</label><div class="options-group"><div class="option-checkbox"><input type="checkbox" id="panorama" value="120000"><label for="panorama">Панорамная крыша (+120 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="premium-sound" value="90000"><label for="premium-sound">Премиум-аудиосистема (+90 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="assist-package" value="150000"><label for="assist-package">Пакет ассистентов (+150 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="sport-package" value="180000"><label for="sport-package">Спортивный пакет (+180 000 ₽)</label></div></div></div>
+                <div class="form-group full-width"><label>Опции</label><div class="options-group"><div class="option-checkbox"><input type="checkbox" id="panorama" value="120000"><label for="panorama">Панорамная крыша (+120 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="premium-sound" value="90000"><label for="premium-sound">Премиум-аудио (+90 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="assist-package" value="150000"><label for="assist-package">Пакет ассистентов (+150 000 ₽)</label></div><div class="option-checkbox"><input type="checkbox" id="sport-package" value="180000"><label for="sport-package">Спортивный пакет (+180 000 ₽)</label></div></div></div>
                 <div class="calculator-result"><h3>Итоговая стоимость</h3><div class="total-price" id="total-price">2 500 000 ₽</div></div>
             </form>
         </div>
@@ -397,7 +337,7 @@ if (empty($languageOptions)) {
         </form>
     </section>
 
-    <!-- Анкета (интеграция) -->
+    <!-- Анкета (автомобильная) -->
     <section id="anketa" class="anketa-section">
         <div class="section-title">
             <h2>Анкета для получения логина и пароля</h2>
@@ -405,7 +345,7 @@ if (empty($languageOptions)) {
         </div>
         <div class="anketa-container">
             <?php if ($loginError): ?>
-                <div class="alert error"><?= htmlspecialchars($loginError) ?></div>
+                <div class="alert error">❌ <?= htmlspecialchars($loginError) ?></div>
             <?php endif; ?>
             <?php if ($credentialsMessage): ?>
                 <div class="credentials-box">🔐 <?= $credentialsMessage ?></div>
@@ -417,7 +357,6 @@ if (empty($languageOptions)) {
                 <div class="alert error">❌ <?= htmlspecialchars($errorList['database']) ?></div>
             <?php endif; ?>
             
-            <!-- Панель входа для редактирования -->
             <?php if ($isAuthenticated): ?>
                 <div class="auth-panel">
                     <span>👋 Вы вошли как <strong><?= htmlspecialchars($_SESSION['login']) ?></strong></span>
@@ -434,70 +373,111 @@ if (empty($languageOptions)) {
                 </div>
             <?php endif; ?>
 
-            <!-- Форма анкеты -->
             <form method="post" action="" id="anketa-form">
                 <div class="form-group <?= isset($errorList['full_name']) ? 'has-error' : '' ?>">
                     <label>ФИО *</label>
-                    <input type="text" name="full_name" value="<?= htmlspecialchars($formInput['full_name']) ?>" required>
-                    <?php if (isset($errorList['full_name'])): ?>
-                        <div class="field-error"><?= $errorList['full_name'] ?></div>
-                    <?php endif; ?>
+                    <input type="text" name="full_name" value="<?= htmlspecialchars($formInput['full_name'] ?? '') ?>" required>
+                    <?php if (isset($errorList['full_name'])): ?><div class="field-error"><?= $errorList['full_name'] ?></div><?php endif; ?>
                 </div>
                 <div class="form-group <?= isset($errorList['phone']) ? 'has-error' : '' ?>">
                     <label>Телефон *</label>
-                    <input type="tel" name="phone" value="<?= htmlspecialchars($formInput['phone']) ?>" required>
-                    <?php if (isset($errorList['phone'])): ?>
-                        <div class="field-error"><?= $errorList['phone'] ?></div>
-                    <?php endif; ?>
+                    <input type="tel" name="phone" value="<?= htmlspecialchars($formInput['phone'] ?? '') ?>" required>
+                    <?php if (isset($errorList['phone'])): ?><div class="field-error"><?= $errorList['phone'] ?></div><?php endif; ?>
                 </div>
                 <div class="form-group <?= isset($errorList['email']) ? 'has-error' : '' ?>">
                     <label>Email *</label>
-                    <input type="email" name="email" value="<?= htmlspecialchars($formInput['email']) ?>" required>
-                    <?php if (isset($errorList['email'])): ?>
-                        <div class="field-error"><?= $errorList['email'] ?></div>
-                    <?php endif; ?>
+                    <input type="email" name="email" value="<?= htmlspecialchars($formInput['email'] ?? '') ?>" required>
+                    <?php if (isset($errorList['email'])): ?><div class="field-error"><?= $errorList['email'] ?></div><?php endif; ?>
                 </div>
                 <div class="form-group <?= isset($errorList['birth_date']) ? 'has-error' : '' ?>">
                     <label>Дата рождения *</label>
-                    <input type="date" name="birth_date" value="<?= htmlspecialchars($formInput['birth_date']) ?>" required>
-                    <?php if (isset($errorList['birth_date'])): ?>
-                        <div class="field-error"><?= $errorList['birth_date'] ?></div>
-                    <?php endif; ?>
+                    <input type="date" name="birth_date" value="<?= htmlspecialchars($formInput['birth_date'] ?? '') ?>" required>
+                    <?php if (isset($errorList['birth_date'])): ?><div class="field-error"><?= $errorList['birth_date'] ?></div><?php endif; ?>
                 </div>
                 <div class="form-group <?= isset($errorList['gender']) ? 'has-error' : '' ?>">
                     <label>Пол *</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="gender" value="male" <?= $formInput['gender'] === 'male' ? 'checked' : '' ?> required> Мужской</label>
-                        <label><input type="radio" name="gender" value="female" <?= $formInput['gender'] === 'female' ? 'checked' : '' ?>> Женский</label>
+                        <label><input type="radio" name="gender" value="male" <?= ($formInput['gender'] ?? '') === 'male' ? 'checked' : '' ?> required> Мужской</label>
+                        <label><input type="radio" name="gender" value="female" <?= ($formInput['gender'] ?? '') === 'female' ? 'checked' : '' ?>> Женский</label>
                     </div>
-                    <?php if (isset($errorList['gender'])): ?>
-                        <div class="field-error"><?= $errorList['gender'] ?></div>
-                    <?php endif; ?>
+                    <?php if (isset($errorList['gender'])): ?><div class="field-error"><?= $errorList['gender'] ?></div><?php endif; ?>
                 </div>
-                <div class="form-group <?= isset($errorList['languages']) ? 'has-error' : '' ?>">
-                    <label>Любимые языки программирования *</label>
-                    <select name="languages[]" multiple size="6" required>
-                        <?php foreach ($languageOptions as $lang): ?>
-                            <option value="<?= htmlspecialchars($lang['name']) ?>" <?= in_array($lang['name'], $formInput['languages']) ? 'selected' : '' ?>><?= htmlspecialchars($lang['name']) ?></option>
+
+                <div class="form-group <?= isset($errorList['car_model']) ? 'has-error' : '' ?>">
+                    <label>Модель BMW *</label>
+                    <select name="car_model" required>
+                        <option value="">Выберите модель</option>
+                        <?php foreach ($carModels as $value => $label): ?>
+                            <option value="<?= $value ?>" <?= ($formInput['car_model'] ?? '') == $value ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (isset($errorList['languages'])): ?>
-                        <div class="field-error"><?= $errorList['languages'] ?></div>
-                    <?php endif; ?>
+                    <?php if (isset($errorList['car_model'])): ?><div class="field-error"><?= $errorList['car_model'] ?></div><?php endif; ?>
                 </div>
-                <div class="form-group <?= isset($errorList['bio']) ? 'has-error' : '' ?>">
-                    <label>Биография</label>
-                    <textarea name="bio" rows="4"><?= htmlspecialchars($formInput['bio']) ?></textarea>
-                    <?php if (isset($errorList['bio'])): ?>
-                        <div class="field-error"><?= $errorList['bio'] ?></div>
-                    <?php endif; ?>
+
+                <div class="form-group <?= isset($errorList['car_color']) ? 'has-error' : '' ?>">
+                    <label>Цвет *</label>
+                    <div class="radio-group">
+                        <?php foreach ($carColors as $color): ?>
+                            <label><input type="radio" name="car_color" value="<?= $color ?>" <?= ($formInput['car_color'] ?? '') == $color ? 'checked' : '' ?> required> <?= $color ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (isset($errorList['car_color'])): ?><div class="field-error"><?= $errorList['car_color'] ?></div><?php endif; ?>
                 </div>
+
+                <div class="form-group <?= isset($errorList['engine_type']) ? 'has-error' : '' ?>">
+                    <label>Тип двигателя *</label>
+                    <select name="engine_type" required>
+                        <option value="">Выберите</option>
+                        <?php foreach ($engineTypes as $type): ?>
+                            <option value="<?= $type ?>" <?= ($formInput['engine_type'] ?? '') == $type ? 'selected' : '' ?>><?= $type ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (isset($errorList['engine_type'])): ?><div class="field-error"><?= $errorList['engine_type'] ?></div><?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errorList['transmission']) ? 'has-error' : '' ?>">
+                    <label>Коробка передач *</label>
+                    <select name="transmission" required>
+                        <option value="">Выберите</option>
+                        <?php foreach ($transmissions as $trans): ?>
+                            <option value="<?= $trans ?>" <?= ($formInput['transmission'] ?? '') == $trans ? 'selected' : '' ?>><?= $trans ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (isset($errorList['transmission'])): ?><div class="field-error"><?= $errorList['transmission'] ?></div><?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errorList['drive_type']) ? 'has-error' : '' ?>">
+                    <label>Привод *</label>
+                    <select name="drive_type" required>
+                        <option value="">Выберите</option>
+                        <?php foreach ($driveTypes as $drive): ?>
+                            <option value="<?= $drive ?>" <?= ($formInput['drive_type'] ?? '') == $drive ? 'selected' : '' ?>><?= $drive ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (isset($errorList['drive_type'])): ?><div class="field-error"><?= $errorList['drive_type'] ?></div><?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errorList['desired_hp']) ? 'has-error' : '' ?>">
+                    <label>Желаемая мощность (л.с.)</label>
+                    <input type="number" name="desired_hp" value="<?= htmlspecialchars($formInput['desired_hp'] ?? '') ?>" min="50" max="2000">
+                    <?php if (isset($errorList['desired_hp'])): ?><div class="field-error"><?= $errorList['desired_hp'] ?></div><?php endif; ?>
+                </div>
+
+                <div class="form-group">
+                    <label>Дополнительные опции</label>
+                    <div class="options-group">
+                        <?php foreach ($carOptionsList as $key => $label): ?>
+                            <label><input type="checkbox" name="car_options[]" value="<?= $key ?>" <?= in_array($key, ($formInput['car_options'] ?? [])) ? 'checked' : '' ?>> <?= htmlspecialchars($label) ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (isset($errorList['car_options'])): ?><div class="field-error"><?= $errorList['car_options'] ?></div><?php endif; ?>
+                </div>
+
                 <div class="form-group checkbox-group <?= isset($errorList['contract_agreed']) ? 'has-error' : '' ?>">
-                    <label><input type="checkbox" name="contract_agreed" <?= $formInput['contract_agreed'] ? 'checked' : '' ?> required> С контрактом ознакомлен(а) *</label>
-                    <?php if (isset($errorList['contract_agreed'])): ?>
-                        <div class="field-error"><?= $errorList['contract_agreed'] ?></div>
-                    <?php endif; ?>
+                    <label><input type="checkbox" name="contract_agreed" <?= ($formInput['contract_agreed'] ?? false) ? 'checked' : '' ?> required> С контрактом ознакомлен(а) *</label>
+                    <?php if (isset($errorList['contract_agreed'])): ?><div class="field-error"><?= $errorList['contract_agreed'] ?></div><?php endif; ?>
                 </div>
+
                 <button type="submit" class="btn"><?= $isAuthenticated ? 'Обновить данные' : 'Сохранить' ?></button>
             </form>
             <div id="api-message" style="margin-top: 1rem; display: none;"></div>
@@ -517,6 +497,7 @@ if (empty($languageOptions)) {
                 <li><a href="#slider">Галерея</a></li>
                 <li><a href="#contact">Контакты</a></li>
                 <li><a href="#anketa">Анкета</a></li>
+                <li><a href="admin.php">Админ</a></li>
             </ul>
             <div class="quote-section">
                 <p class="inspiration-quote">«BMWs are about more than just cars. They're about the journey that you make with your heart, mind, and soul» — BMW.</p>
@@ -525,7 +506,7 @@ if (empty($languageOptions)) {
         </div>
     </footer>
 
-    <!-- Modal -->
+    <!-- Modal для связи -->
     <div class="modal" id="contact-modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>

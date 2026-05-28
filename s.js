@@ -226,8 +226,7 @@ window.addEventListener('resize', () => {
         logo.style.opacity = '1'; logo.style.visibility = 'visible';
     }
 });
-
-// ==================== НОВЫЙ КОД ДЛЯ АНКЕТЫ (REST API) ====================
+// ==================== КОД ДЛЯ АНКЕТЫ (REST API) ====================
 (function() {
     const form = document.getElementById('anketa-form');
     if (!form) return;
@@ -251,9 +250,9 @@ window.addEventListener('resize', () => {
         if (stored) authData = JSON.parse(stored);
     } catch(e) {}
 
-    // Загрузка данных для авторизованного пользователя
+    // Загрузка данных для авторизованного пользователя (исправлен путь)
     if (authData && authData.id && authData.login && authData.password) {
-        fetch(`/api/application/${authData.id}`, {
+        fetch(`api.php/application/${authData.id}`, {
             headers: { 'Authorization': 'Basic ' + btoa(authData.login + ':' + authData.password) }
         })
         .then(res => res.ok ? res.json() : null)
@@ -266,9 +265,17 @@ window.addEventListener('resize', () => {
                 form.querySelector('[name="birth_date"]').value = d.birth_date;
                 const genderRadios = form.querySelectorAll('[name="gender"]');
                 genderRadios.forEach(r => { if (r.value === d.gender) r.checked = true; });
-                const select = form.querySelector('[name="languages[]"]');
-                Array.from(select.options).forEach(opt => { opt.selected = d.languages.includes(opt.value); });
-                form.querySelector('[name="bio"]').value = d.bio;
+                form.querySelector('[name="car_model"]').value = d.car_model;
+                const colorRadio = form.querySelector(`[name="car_color"][value="${d.car_color}"]`);
+                if (colorRadio) colorRadio.checked = true;
+                form.querySelector('[name="engine_type"]').value = d.engine_type;
+                form.querySelector('[name="transmission"]').value = d.transmission;
+                form.querySelector('[name="drive_type"]').value = d.drive_type;
+                form.querySelector('[name="desired_hp"]').value = d.desired_hp || '';
+                const opts = d.car_options || [];
+                form.querySelectorAll('[name="car_options[]"]').forEach(cb => {
+                    cb.checked = opts.includes(cb.value);
+                });
                 form.querySelector('[name="contract_agreed"]').checked = d.contract_agreed;
                 const submitBtn = form.querySelector('button[type="submit"]');
                 if (submitBtn) submitBtn.textContent = 'Обновить данные';
@@ -276,27 +283,28 @@ window.addEventListener('resize', () => {
         }).catch(console.warn);
     }
 
+    // Отправка формы (исправлен путь)
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         const formData = new FormData(form);
         const json = {};
         formData.forEach((val, key) => {
-            if (key === 'languages[]') {
-                if (!json.languages) json.languages = [];
-                json.languages.push(val);
+            if (key === 'car_options[]') {
+                if (!json.car_options) json.car_options = [];
+                json.car_options.push(val);
             } else {
                 json[key] = val;
             }
         });
-        if (!json.languages) json.languages = [];
+        if (!json.car_options) json.car_options = [];
         json.contract_agreed = !!json.contract_agreed;
 
-        let url = '/api/application';
+        let url = 'api.php/application';
         let method = 'POST';
         let headers = { 'Content-Type': 'application/json' };
 
         if (authData && authData.id) {
-            url = `/api/application/${authData.id}`;
+            url = `api.php/application/${authData.id}`;
             method = 'PUT';
             headers['Authorization'] = 'Basic ' + btoa(authData.login + ':' + authData.password);
         }

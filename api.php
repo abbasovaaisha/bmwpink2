@@ -1,4 +1,4 @@
-\<?php
+<?php
 require_once 'db.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -7,14 +7,17 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$parts = explode('/', trim($path, '/'));
-if ($parts[0] !== 'api' || $parts[1] !== 'application') {
-    http_response_code(404); echo json_encode(['error' => 'Not found']); exit;
+// Маршрут через GET-параметр
+$route = $_GET['route'] ?? '';
+$id = isset($_GET['id']) && ctype_digit($_GET['id']) ? (int)$_GET['id'] : null;
+
+if ($route !== 'application') {
+    http_response_code(404);
+    echo json_encode(['error' => 'Not found']);
+    exit;
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$id = isset($parts[2]) && ctype_digit($parts[2]) ? (int)$parts[2] : null;
 
 function authenticateUser() {
     if (!isset($_SERVER['PHP_AUTH_USER'])) return null;
@@ -89,9 +92,11 @@ try {
         saveApplication($id, $formData);
         echo json_encode(['success' => true, 'message' => 'Данные обновлены']);
     } else {
-        http_response_code(405); echo json_encode(['error' => 'Method not allowed']);
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
     }
 } catch (Exception $e) {
-    http_response_code(500); echo json_encode(['error' => $e->getMessage()]);
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
 }
 ?>

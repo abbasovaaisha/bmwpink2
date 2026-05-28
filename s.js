@@ -227,6 +227,7 @@ window.addEventListener('resize', () => {
     }
 });
 // ==================== КОД ДЛЯ АНКЕТЫ (REST API) ====================
+// ==================== КОД ДЛЯ АНКЕТЫ (REST API) ====================
 (function() {
     const form = document.getElementById('anketa-form');
     if (!form) return;
@@ -250,9 +251,9 @@ window.addEventListener('resize', () => {
         if (stored) authData = JSON.parse(stored);
     } catch(e) {}
 
-    // Загрузка данных для авторизованного пользователя (исправлен путь)
+    // Загрузка данных для авторизованного пользователя
     if (authData && authData.id && authData.login && authData.password) {
-        fetch(`api.php/application/${authData.id}`, {
+        fetch(`api.php?route=application&id=${authData.id}`, {
             headers: { 'Authorization': 'Basic ' + btoa(authData.login + ':' + authData.password) }
         })
         .then(res => res.ok ? res.json() : null)
@@ -283,7 +284,7 @@ window.addEventListener('resize', () => {
         }).catch(console.warn);
     }
 
-    // Отправка формы (исправлен путь)
+    // Отправка формы
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         const formData = new FormData(form);
@@ -299,12 +300,12 @@ window.addEventListener('resize', () => {
         if (!json.car_options) json.car_options = [];
         json.contract_agreed = !!json.contract_agreed;
 
-        let url = 'api.php/application';
+        let url = 'api.php?route=application';
         let method = 'POST';
         let headers = { 'Content-Type': 'application/json' };
 
         if (authData && authData.id) {
-            url = `api.php/application/${authData.id}`;
+            url = `api.php?route=application&id=${authData.id}`;
             method = 'PUT';
             headers['Authorization'] = 'Basic ' + btoa(authData.login + ':' + authData.password);
         }

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMW - Розовый проект</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">   
+</head>
+<body>
+    <!-- Header with Video -->
+    <header>
+        <div class="video-container">
+            <video autoplay muted loop>
+                <source src="bmwvideo.mp4" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+            <div class="overlay"></div>
+        </div>
+        
+        <nav>
+            <a href="#" class="logo">BMW <span>Pink</span></a>
+            <ul class="nav-links">
+                <li><a href="#">Главная</a></li>
+                <li>
+                    <a href="#models">Модели</a>
+                    <ul class="dropdown">
+                        <li><a href="#m1">Серия 1</a></li>
+                        <li><a href="#m3">Серия 3</a></li>
+                        <li><a href="#m5">Серия 5</a></li>
+                    </ul>
+                </li>
+                <li><a href="#calculator">Калькулятор</a></li>
+                <li><a href="#tuning">Тюнинг</a></li>
+                <li><a href="#slider">Галерея</a></li>
+                <li><a href="#contact">Контакты</a></li>
+                <li><a href="#" id="contact-btn" class="btn">Связь с нами</a></li>
+            </ul>
+            <div class="burger">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </nav>
+        
+        <div class="hero">
+            <h1>BMW в розовом стиле</h1>
+            <p>Откройте для себя новый взгляд на легендарные автомобили BMW в эксклюзивной розовой тематике</p>
+            <a href="#models" class="btn">Исследовать модели</a>
+        </div>
+    </header>
+
+    <!-- Models Section -->
+    <section id="models">
+        <div class="section-title">
+            <h2>Наши модели</h2>
+            <p>Выберите идеальный BMW для себя из нашего эксклюзивного каталога</p>
+        </div>
+        
+        <div class="models-grid">
+            <div class="model-card" id="m1">
+                <div class="model-img">
+                    <img src="bmw1black.jpeg" alt="BMW 1 Series" id="model-1-img">
+                </div>
+                <div class="model-info">
+                    <h3>BMW 1 Series</h3>
+                    <p>Компактный премиальный автомобиль с динамичным дизайном и передовыми технологиями.</p>
+                    <div class="model-price">от 2 500 000 ₽</div>
+                    
+                    <div class="color-picker">
+                        <h4>Выберите цвет:</h4>
+                        <div class="color-options">
+                            <div class="color-option active" style="background-color: #2A2A2A;" data-color="#2A2A2A" data-model="1" data-color-name="Черный"></div>
+                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-color="#FFFFFF" data-model="1" data-color-name="Белый"></div>
+                            <div class="color-option" style="background-color: #003DA5;" data-color="#003DA5" data-model="1" data-color-name="Синий"></div>
+                            <div class="color-option" style="background-color: #E91E63;" data-color="#E91E63" data-model="1" data-color-name="Розовый"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="model-card" id="m3">
+                <div class="model-img">
+                    <img src="bmw3black.jpeg" alt="BMW 3 Series" id="model-2-img">
+                </div>
+                <div class="model-info">
+                    <h3>BMW 3 Series</h3>
+                    <p>Легендарный спортивный седан, сочетающий в себе элегантность и производительность.</p>
+                    <div class="model-price">от 3 800 000 ₽</div>
+                    
+                    <div class="color-picker">
+                        <h4>Выберите цвет:</h4>
+                        <div class="color-options">
+                            <div class="color-option active" style="background-color: #2A2A2A;" data-color="#2A2A2A" data-model="2" data-color-name="Черный"></div>
+                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-color="#FFFFFF" data-model="2" data-color-name="Белый"></div>
+                            <div class="color-option" style="background-color: #003DA5;" data-color="#003DA5" data-model="2" data-color-name="Синий"></div>
+                            <div class="color-option" style="background-color: #E91E63;" data-color="#E91E63" data-model="2" data-color-name="Розовый"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="model-card" id="m5">
+                <div class="model-img">
+                    <img src="bmw5black.jpeg" alt="BMW 5 Series" id="model-3-img">
+                </div>
+                <div class="model-info">
+                    <h3>BMW 5 Series</h3>
+                    <p>Бизнес-класс с инновационными технологиями и непревзойденным комфортом.</p>
+                    <div class="model-price">от 4 900 000 ₽</div>
+                    
+                    <div class="color-picker">
+                        <h4>Выберите цвет:</h4>
+                        <div class="color-options">
+                            <div class="color-option active" style="background-color: #2A2A2A;" data-color="#2A2A2A" data-model="3" data-color-name="Черный"></div>
+                            <div class="color-option" style="background-color: #FFFFFF; border: 1px solid #eee;" data-color="#FFFFFF" data-model="3" data-color-name="Белый"></div>
+                            <div class="color-option" style="background-color: #003DA5;" data-color="#003DA5" data-model="3" data-color-name="Синий"></div>
+                            <div class="color-option" style="background-color: #E91E63;" data-color="#E91E63" data-model="3" data-color-name="Розовый"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fast Models Section -->
+    <section class="fast-models">
+        <div class="section-title">
+            <h2>Самые быстрые BMW в мире</h2>
+            <p>Рейтинг самых скоростных моделей BMW по показателям разгона и максимальной скорости</p>
+        </div>
+        
+        <table class="fast-table">
+            <thead>
+                <tr>
+                    <th>Модель</th>
+                    <th>Разгон 0-100 км/ч</th>
+                    <th>Макс. скорость</th>
+                    <th>Двигатель</th>
+                    <th>Мощность</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>BMW M8 Competition Coupe</td>
+                    <td>3.2 с</td>
+                    <td>305 км/ч</td>
+                    <td>4.4-литровый V8 с twin-turbo</td>
+                    <td>625–640 л.с.</td>
+                </tr>
+                <tr>
+                    <td>BMW M5 CS</td>
+                    <td>3.0 с</td>
+                    <td>305 км/ч</td>
+                    <td>4.4-литровый V8 с twin-turbo</td>
+                    <td>635 л.с.</td>
+                </tr>
+                <tr>
+                    <td>BMW M5 Competition</td>
+                    <td>3.3 с</td>
+                    <td>305 км/ч</td>
+                    <td>4.4-литровый V8 с twin-turbo</td>
+                    <td>625 л.с.</td>
+                </tr>
+                <tr>
+                    <td>BMW M4 CSL</td>
+                    <td>3.6 с</td>
+                    <td>307 км/ч</td>
+                    <td>3.0-литровый рядный 6-цилиндровый с twin-turbo</td>
+                    <td>550 л.с.</td>
+                </tr>
+                <tr>
+                    <td>BMW M3 Competition с M xDrive</td>
+                    <td>3.5 с</td>
+                    <td>290 км/ч</td>
+                    <td>3.0-литровый рядный 6-цилиндровый с twin-turbo</td>
+                    <td>510 л.с.</td>
+                </tr>
+                <tr>
+                    <td>BMW X3 M Competition</td>
+                    <td>3.8 с</td>
+                    <td>285 км/ч</td>
+                    <td>3.0-литровый рядный 6-цилиндровый с twin-turbo</td>
+                    <td>510 л.с.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Tuning Section -->
+    <section id="tuning">
+        <div class="section-title">
+            <h2>Дополнительные услуги тюнинга</h2>
+            <p>Индивидуальные решения для персонализации вашего BMW</p>
+        </div>
+        
+        <div class="tuning-grid">
+            <div class="tuning-card">
+                <div class="tuning-img">
+                    <img src="obves.jpg">
+                </div>
+                <div class="tuning-info">
+                    <h3>Аэродинамический обвес</h3>
+                    <p>Улучшение аэродинамических характеристик и спортивного внешнего вида</p>
+                    <div class="tuning-price">от 150 000 ₽</div>
+                </div>
+            </div>
+            
+            <div class="tuning-card">
+                <div class="tuning-img">
+                    <img src="sport.jpg">
+                </div>
+                <div class="tuning-info">
+                    <h3>Спортивная выхлопная система</h3>
+                    <p>Улучшение мощности и уникального звучания двигателя</p>
+                    <div class="tuning-price">от 80 000 ₽</div>
+                </div>
+            </div>
+            
+            <div class="tuning-card">
+                <div class="tuning-img">
+                    <img src="chip.jpg">
+                </div>
+                <div class="tuning-info">
+                    <h3>Чип-тюнинг</h3>
+                    <p>Оптимизация работы двигателя для увеличения мощности и крутящего момента</p>
+                    <div class="tuning-price">от 50 000 ₽</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slider Section -->
+    <section id="slider" class="slider-section">
+        <div class="section-title">
+            <h2>Галерея BMW</h2>
+            <p>Лучшие модели BMW в эксклюзивных цветах и модификациях</p>
+        </div>
+        
+        <div class="slider-container">
+            <div class="slider">
+                <div class="slide">
+                    <img src="m4.jpg">
+                    <div class="slide-content">
+                        <h3>BMW M4 Competition</h3>
+                        <p>Спортивный купе с двигателем 510 л.с. и системой полного привода M xDrive</p>
+                    </div>
+                </div>
+                <div class="slide">
+                    <img src="bmwi8.jpg">
+                    <div class="slide-content">
+                        <h3>BMW i8 Roadster</h3>
+                        <p>Гибридный спортивный автомобиль с откидным верхом и инновационным дизайном</p>
+                    </div>
+                </div>
+                <div class="slide">
+                    <img src="bmwx6.jpeg">
+                    <div class="slide-content">
+                        <h3>BMW X6 M</h3>
+                        <p>Кроссовер-купе с мощным двигателем V8 и спортивными характеристиками</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="slider-controls">
+                <button class="slider-btn prev-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="slider-btn next-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="slider-dots">
+                <span class="dot active" data-slide="0"></span>
+                <span class="dot" data-slide="1"></span>
+                <span class="dot" data-slide="2"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calculator Section -->
+    <section id="calculator">
+        <div class="section-title">
+            <h2>Калькулятор стоимости</h2>
+            <p>Рассчитайте стоимость вашего будущего BMW с учетом всех опций</p>
+        </div>
+        
+        <div class="calculator">
+            <form class="calculator-form" id="price-calculator">
+                <div class="form-group">
+                    <label for="model">Модель автомобиля</label>
+                    <select id="model" name="model">
+                        <option value="2500000">BMW 1 Series - 2 500 000 ₽</option>
+                        <option value="3800000">BMW 3 Series - 3 800 000 ₽</option>
+                        <option value="4900000">BMW 5 Series - 4 900 000 ₽</option>
+                        <option value="4200000">BMW X3 - 4 200 000 ₽</option>
+                        <option value="6500000">BMW X5 - 6 500 000 ₽</option>
+                        <option value="12000000">BMW i8 - 12 000 000 ₽</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="color">Цвет кузова</label>
+                    <select id="color" name="color">
+                        <option value="0">Черный (стандартный)</option>
+                        <option value="50000">Белый (+50 000 ₽)</option>
+                        <option value="100000">Синий (+100 000 ₽)</option>
+                        <option value="150000">Розовый (+150 000 ₽)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="interior">Отделка салона</label>
+                    <select id="interior" name="interior">
+                        <option value="0">Стандартная кожа</option>
+                        <option value="150000">Кожа Nappa (+150 000 ₽)</option>
+                        <option value="250000">Индивидуальная кожа (+250 000 ₽)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="wheels">Диски</label>
+                    <select id="wheels" name="wheels">
+                        <option value="0">Стандартные 17"</option>
+                        <option value="80000">Легкосплавные 18" (+80 000 ₽)</option>
+                        <option value="150000">Легкосплавные 19" (+150 000 ₽)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label>Дополнительные опции</label>
+                    <div class="options-group">
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="panorama" name="panorama" value="120000">
+                            <label for="panorama">Панорамная крыша (+120 000 ₽)</label>
+                        </div>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="premium-sound" name="premium-sound" value="90000">
+                            <label for="premium-sound">Премиум-аудиосистема (+90 000 ₽)</label>
+                        </div>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="assist-package" name="assist-package" value="150000">
+                            <label for="assist-package">Пакет ассистентов (+150 000 ₽)</label>
+                        </div>
+                        <div class="option-checkbox">
+                            <input type="checkbox" id="sport-package" name="sport-package" value="180000">
+                            <label for="sport-package">Спортивный пакет (+180 000 ₽)</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calculator-result">
+                    <h3>Итоговая стоимость</h3>
+                    <div class="total-price" id="total-price">2 500 000 ₽</div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <div class="section-title">
+            <h2>Свяжитесь с нами</h2>
+            <p>Оставьте заявку, и наш менеджер свяжется с вами для консультации</p>
+        </div>
+        
+        <form class="contact-form" id="contact-form">
+            <div class="form-group">
+                <label for="name">Ваше имя</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Электронная почта</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Телефон</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message">О себе</label>
+                <textarea id="message" name="message" placeholder="Расскажите о ваших пожеланиях (минимум 10 символов)..." required></textarea>
+            </div>
+            
+            <button type="submit" class="btn">Отправить заявку</button>
+            
+            <div class="form-message" id="form-message"></div>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">BMW <span>Pink</span></div>
+            <ul class="footer-links">
+                <li><a href="#">Главная</a></li>
+                <li><a href="#models">Модели</a></li>
+                <li><a href="#calculator">Калькулятор</a></li>
+                <li><a href="#tuning">Тюнинг</a></li>
+                <li><a href="#slider">Галерея</a></li>
+                <li><a href="#contact">Контакты</a></li>
+            </ul>
+            
+            <!-- Добавленная цитата -->
+            <div class="quote-section">
+                <p class="inspiration-quote">
+                    «BMWs are about more than just cars. They're about the journey that you make with your heart, mind, and soul» — BMW.
+                </p>
+            </div>
+            
+            <div class="copyright">© 2025 BMW Pink Project. Все права защищены.</div>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="contact-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Связь с нами</h2>
+            <form id="modal-contact-form">
+                <div class="form-group">
+                    <label for="modal-name">Ваше имя</label>
+                    <input type="text" id="modal-name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="modal-phone">Телефон</label>
+                    <input type="tel" id="modal-phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-message">О себе</label>
+                    <textarea id="modal-message" name="message" placeholder="Расскажите о ваших пожеланиях (минимум 10 символов)..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn">Отправить</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+<script src="s.js" defer></script>
+</html>
